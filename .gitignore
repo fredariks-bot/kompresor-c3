@@ -1,0 +1,9 @@
+build/
+build-*/
+.vscode/
+.idea/
+cmake-build-*/
+*.vst3/
+JUCE/
+juce/
+.DS_Store
