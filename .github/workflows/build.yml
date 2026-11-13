@@ -50,11 +50,33 @@ jobs:
       - name: Build
         run: cmake --build build --config Release --parallel
 
+      - name: Package (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cd build/KompresorC3_artefacts/Release
+          codesign --force --deep -s - "VST3/Kompresor C3.vst3" || true
+          ditto -c -k --keepParent "VST3/Kompresor C3.vst3" "Kompresor C3.vst3.zip"
+          ditto -c -k --keepParent "Standalone/Kompresor C3.app" "Kompresor C3 Standalone.zip"
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "build/KompresorC3_artefacts/Release/VST3/Kompresor C3.vst3" -DestinationPath "Kompresor C3.vst3.zip"
+          Compress-Archive -Path "build/KompresorC3_artefacts/Release/Standalone/Kompresor C3.exe" -DestinationPath "Kompresor C3 Standalone.zip"
+
+      - name: Package (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cd build/KompresorC3_artefacts/Release
+          chmod +x "VST3/Kompresor C3.vst3/Contents/x86_64-linux/Kompresor C3.so"
+          chmod +x "Standalone/Kompresor C3"
+          zip -r "Kompresor C3.vst3.zip" "VST3/Kompresor C3.vst3"
+          zip -r "Kompresor C3 Standalone.zip" "Standalone/Kompresor C3"
+
       - name: Upload VST3
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: |
-            build/KompresorC3_artefacts/Release/VST3/
-            build/KompresorC3_artefacts/Release/Standalone/
+          path: "*.zip"
           if-no-files-found: error
