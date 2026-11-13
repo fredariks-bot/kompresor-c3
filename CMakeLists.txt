@@ -28,7 +28,7 @@ juce_add_plugin(KompresorC3
     BUNDLE_ID com.kmp.kompresorc3
     PLUGIN_MANUFACTURER_CODE Kmps
     PLUGIN_CODE Kmp3
-    FORMATS VST3 Standalone
+    FORMATS VST3
     VST3_CATEGORIES Fx
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE

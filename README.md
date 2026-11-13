@@ -40,8 +40,6 @@ Zum Installieren `COPY_PLUGIN_AFTER_BUILD=TRUE` beim Konfigurieren setzen:
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DCOPY_PLUGIN_AFTER_BUILD=TRUE
 ```
 
-Zusätzlich wird eine Standalone-App gebaut (praktisch zum schnellen Testen).
-
 ## Tests
 
 Die DSP-Engine (`Source/DSP/CompressorCore.h`) ist reines C++ ohne JUCE-Abhängigkeit
