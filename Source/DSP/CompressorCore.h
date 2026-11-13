@@ -99,6 +99,16 @@ public:
     {
         blockMinGainDb = 0.0f;
 
+        if (numMainChannels <= 0 || mainIn == nullptr || mainIn[0] == nullptr
+            || numOutChannels <= 0 || out == nullptr || numSamples <= 0)
+        {
+            for (int c = 0; c < numOutChannels; ++c)
+                if (out != nullptr && out[c] != nullptr)
+                    std::fill_n (out[c], (size_t) numSamples, 0.0f);
+
+            return;
+        }
+
         for (int c = 0; c < numOutChannels; ++c)
         {
             const int state = std::min (c, maxChannels - 1);

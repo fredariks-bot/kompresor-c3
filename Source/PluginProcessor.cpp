@@ -187,7 +187,16 @@ void KompresorC3AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     if (numSamples <= 0 || numOutChannels <= 0)
         return;
 
-    const bool useExternalSc = scExtParam->load() > 0.5f && scBus.getNumChannels() > 0;
+    const int numInChannels = mainIn.getNumChannels();
+
+    if (numInChannels <= 0)
+    {
+        outBus.clear();
+        return;
+    }
+
+    const int numScChannels = scBus.getNumChannels();
+    const bool useExternalSc = scExtParam->load() > 0.5f && numScChannels > 0;
 
     kmp::CompressorParams p;
     p.thresholdDb   = thresholdParam->load();
@@ -212,11 +221,13 @@ void KompresorC3AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
         mainIn.getNumChannels() > 1 ? mainIn.getReadPointer (1) : mainIn.getReadPointer (0)
     };
 
-    const float* scPtrs[2] =
+    const float* scPtrs[2] = { nullptr, nullptr };
+
+    if (numScChannels > 0)
     {
-        scBus.getReadPointer (0),
-        scBus.getNumChannels() > 1 ? scBus.getReadPointer (1) : scBus.getReadPointer (0)
-    };
+        scPtrs[0] = scBus.getReadPointer (0);
+        scPtrs[1] = numScChannels > 1 ? scBus.getReadPointer (1) : scPtrs[0];
+    }
 
     float* outPtrs[2] =
     {
@@ -224,8 +235,8 @@ void KompresorC3AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
         numOutChannels > 1 ? outBus.getWritePointer (1) : outBus.getWritePointer (0)
     };
 
-    compressor.process (mainPtrs, mainIn.getNumChannels(),
-                        useExternalSc ? scPtrs : nullptr, useExternalSc ? scBus.getNumChannels() : 0,
+    compressor.process (mainPtrs, numInChannels,
+                        useExternalSc ? scPtrs : nullptr, useExternalSc ? numScChannels : 0,
                         outPtrs, numOutChannels, numSamples);
 
     const float gr = juce::jmax (0.0f, compressor.getMaxReductionDb());
@@ -239,7 +250,7 @@ void KompresorC3AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     {
         float mono = mainPtrs[0][i];
 
-        if (mainIn.getNumChannels() > 1)
+        if (numInChannels > 1)
             mono = 0.5f * (mono + mainPtrs[1][i]);
 
         pushSpectrumSamples (&mono, 1);
