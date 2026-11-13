@@ -16,10 +16,17 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y g++ cmake
+          sudo apt-get install -y g++ cmake pkg-config libx11-dev libxext-dev libxinerama-dev \
+            libxrandr-dev libxcursor-dev libfreetype-dev libfontconfig-dev libasound2-dev
 
       - name: Run DSP tests
         run: ./scripts/run_tests.sh
+
+      - name: Run host tests
+        run: |
+          cmake -B build-test -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-test --target HostTest --parallel
+          ./build-test/HostTest
 
   build:
     name: Build VST3

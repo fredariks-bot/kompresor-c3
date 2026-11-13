@@ -54,7 +54,7 @@ private:
     std::shared_ptr<std::atomic<bool>> stateLoading;
 
     juce::AbstractFifo spectrumFifo { spectrumFifoSize };
-    std::vector<float> spectrumBuffer { (size_t) spectrumFifoSize };
+    std::vector<float> spectrumBuffer = std::vector<float> ((size_t) spectrumFifoSize);
 
     std::atomic<float>* thresholdParam  = nullptr;
     std::atomic<float>* ratioParam      = nullptr;

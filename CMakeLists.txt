@@ -53,3 +53,17 @@ target_link_libraries(KompresorC3
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
+
+add_executable(HostTest
+    tests/test_host.cpp
+    Source/PluginProcessor.cpp)
+
+target_compile_definitions(HostTest PUBLIC
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_DISPLAY_SPLASH_SCREEN=0
+    JucePlugin_Name="Kompresor C3")
+
+target_link_libraries(HostTest PRIVATE
+    juce::juce_audio_utils
+    juce::juce_dsp)
