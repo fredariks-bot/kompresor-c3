@@ -1,4 +1,4 @@
-# Kompresor C3
+# Kompressor K3
 
 Ein Kompressor-VST3-Plug-in im Stil von FabFilter Pro-C 3, gebaut mit JUCE 8 und C++17.
 
@@ -30,17 +30,15 @@ Geschwister-Verzeichnis `../juce` vor, wird dieses benutzt.
 
 Das fertige Plug-in liegt danach unter:
 
-- Linux: `build/KompresorC3_artefacts/Release/VST3/Kompresor C3.vst3`
-- macOS: `.../VST3/Kompresor C3.vst3`
-- Windows: `.../VST3/Kompresor C3.vst3`
+- Linux: `build/KompressorK3_artefacts/Release/VST3/Kompressor K3.vst3`
+- macOS: `.../VST3/Kompressor K3.vst3`
+- Windows: `.../VST3/Kompressor K3.vst3`
 
 Zum Installieren `COPY_PLUGIN_AFTER_BUILD=TRUE` beim Konfigurieren setzen:
 
 ```sh
 cmake -B build -DCMAKE_BUILD_TYPE=Release -DCOPY_PLUGIN_AFTER_BUILD=TRUE
 ```
-
-Zusätzlich wird eine Standalone-App gebaut (praktisch zum schnellen Testen).
 
 ## Tests
 

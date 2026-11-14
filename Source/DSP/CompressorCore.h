@@ -22,6 +22,7 @@ struct CompressorParams
     bool  hpfOn         = false;
     bool  rmsMode       = false;
     bool  autoRelease   = false;
+    bool  stereoLink    = true;
 };
 
 inline float gainToDb (float g) noexcept
@@ -99,35 +100,78 @@ public:
     {
         blockMinGainDb = 0.0f;
 
+        if (numMainChannels <= 0 || mainIn == nullptr || mainIn[0] == nullptr
+            || numOutChannels <= 0 || out == nullptr || numSamples <= 0)
+        {
+            for (int c = 0; c < numOutChannels; ++c)
+                if (out != nullptr && out[c] != nullptr)
+                    std::fill_n (out[c], (size_t) numSamples, 0.0f);
+
+            return;
+        }
+
+        const bool linked = params.stereoLink && numOutChannels > 1;
+        float gainFor[maxChannels] = { 0.0f, 0.0f };
+
         for (int c = 0; c < numOutChannels; ++c)
         {
-            const int state = std::min (c, maxChannels - 1);
-            auto& ch = channels[(size_t) state];
+            auto& ch = channels[(size_t) std::min (c, maxChannels - 1)];
+            ch.inputLevelDb = ch.outputLevelDb = -120.0f;
+        }
 
-            const float* dry   = mainIn[std::min (c, numMainChannels - 1)];
-            const float* scSig = nullptr;
+        for (int i = 0; i < numSamples; ++i)
+        {
+            float levelDb[maxChannels] = { 0.0f, 0.0f };
 
-            if (sidechainIn != nullptr && numSidechainChannels > 0)
-                scSig = sidechainIn[std::min (c, numSidechainChannels - 1)];
-
-            float blockMaxDet = 0.0f;
-            float blockMaxOut = 0.0f;
-
-            for (int i = 0; i < numSamples; ++i)
+            for (int c = 0; c < numOutChannels; ++c)
             {
-                const float x = dry[i];
-                const float det = scSig != nullptr ? scSig[i] : x;
-                const float y = processSample (ch, x, det);
+                const int state = std::min (c, maxChannels - 1);
+                auto& ch = channels[(size_t) state];
 
-                out[c][i] = y;
+                const float* dry = mainIn[std::min (c, numMainChannels - 1)];
+                const float* scSig = nullptr;
 
-                blockMaxDet = std::max (blockMaxDet, std::abs (det));
-                blockMaxOut = std::max (blockMaxOut, std::abs (y));
+                if (sidechainIn != nullptr && numSidechainChannels > 0)
+                    scSig = sidechainIn[std::min (c, numSidechainChannels - 1)];
+
+                const float det = scSig != nullptr ? scSig[i] : dry[i];
+                levelDb[c] = detectLevelDb (ch, det);
             }
 
-            ch.inputLevelDb  = gainToDb (blockMaxDet);
-            ch.outputLevelDb = gainToDb (blockMaxOut);
-            blockMinGainDb = std::min (blockMinGainDb, ch.gainDb);
+            if (linked)
+            {
+                const float lvl = std::max (levelDb[0], levelDb[maxChannels - 1]);
+                updateGain (channels[0], lvl);
+                gainFor[0] = gainFor[maxChannels - 1] = channels[0].gainDb;
+            }
+            else
+            {
+                for (int c = 0; c < numOutChannels; ++c)
+                {
+                    updateGain (channels[(size_t) std::min (c, maxChannels - 1)], levelDb[c]);
+                    gainFor[c] = channels[(size_t) std::min (c, maxChannels - 1)].gainDb;
+                }
+            }
+
+            for (int c = 0; c < numOutChannels; ++c)
+            {
+                const int state = std::min (c, maxChannels - 1);
+                auto& ch = channels[(size_t) state];
+                const float* dry = mainIn[std::min (c, numMainChannels - 1)];
+
+                out[c][i] = applyOutput (ch, dry[i], gainFor[c]);
+
+                ch.inputLevelDb = std::max (ch.inputLevelDb, gainToDb (std::abs (ch.lastDet)));
+                ch.outputLevelDb = std::max (ch.outputLevelDb, gainToDb (std::abs (out[c][i])));
+                blockMinGainDb = std::min (blockMinGainDb, gainFor[c]);
+            }
+        }
+
+        for (int c = 0; c < numOutChannels; ++c)
+        {
+            auto& ch = channels[(size_t) std::min (c, maxChannels - 1)];
+            ch.inputLevelDb = juceFreeClampf (ch.inputLevelDb, -120.0f, 0.0f);
+            ch.outputLevelDb = juceFreeClampf (ch.outputLevelDb, -120.0f, 0.0f);
         }
     }
 
@@ -146,6 +190,7 @@ private:
         float envSq = 0.0f;
         float gainDb = 0.0f;
         float holdSec = 0.0f;
+        float lastDet = 0.0f;
         float inputLevelDb = -100.0f;
         float outputLevelDb = -100.0f;
 
@@ -165,8 +210,14 @@ private:
         return v < lo ? lo : (v > hi ? hi : v);
     }
 
-    float processSample (ChannelState& ch, float x, float det)
+    static float juceFreeClampf (float v, float lo, float hi) noexcept
     {
+        return v < lo ? lo : (v > hi ? hi : v);
+    }
+
+    float detectLevelDb (ChannelState& ch, float det)
+    {
+        ch.lastDet = det;
         float d = det;
 
         if (params.hpfOn)
@@ -176,18 +227,17 @@ private:
             d = ch.lp1 - ch.lp2;
         }
 
-        float levelDb;
-
         if (params.rmsMode)
         {
             ch.envSq += rmsCoef * (d * d - ch.envSq);
-            levelDb = gainToDb (std::sqrt (std::max (ch.envSq, 0.0f)));
-        }
-        else
-        {
-            levelDb = gainToDb (std::abs (d));
+            return gainToDb (std::sqrt (std::max (ch.envSq, 0.0f)));
         }
 
+        return gainToDb (std::abs (d));
+    }
+
+    void updateGain (ChannelState& ch, float levelDb)
+    {
         float target = computeGainDb (levelDb, params.thresholdDb, params.ratio, params.kneeDb);
         target = std::max (target, -params.rangeDb);
 
@@ -205,7 +255,10 @@ private:
 
         const float coef = attacking ? atkCoef : timeToCoef (releaseMs, sampleRateHz);
         ch.gainDb += (target - ch.gainDb) * coef;
+    }
 
+    float applyOutput (ChannelState& ch, float x, float gainDb)
+    {
         ch.delay[(size_t) ch.writePos] = x;
         int readPos = ch.writePos - delaySamples;
 
@@ -215,7 +268,7 @@ private:
         const float delayed = ch.delay[(size_t) readPos];
         ch.writePos = (ch.writePos + 1) % delayCapacity;
 
-        const float wet = delayed * dbToGain (ch.gainDb) * makeupGain;
+        const float wet = delayed * dbToGain (gainDb) * makeupGain;
         return delayed + (wet - delayed) * params.mix;
     }
 

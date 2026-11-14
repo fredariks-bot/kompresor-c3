@@ -80,6 +80,7 @@ public:
         addToggle ("scExternal", "EXT SC");
         addToggle ("hpfOn", "SC HPF");
         addToggle ("autoRelease", "AUTO REL");
+        addToggle ("stereoLink", "ST LINK");
 
         auto addKnob = [this] (const char* paramId, const juce::String& name, const juce::String& suffix)
         {
@@ -114,7 +115,7 @@ public:
 
         g.setColour (KompresorLookAndFeel::text);
         g.setFont (juce::Font (juce::FontOptions (15.0f, juce::Font::bold)));
-        g.drawText ("KOMPRESOR C3", 16.0f, (float) getHeight() - 30.0f, 200.0f, 20.0f, juce::Justification::centredLeft);
+        g.drawText ("KOMPRESSOR K3", 16.0f, (float) getHeight() - 30.0f, 200.0f, 20.0f, juce::Justification::centredLeft);
     }
 
     void resized() override

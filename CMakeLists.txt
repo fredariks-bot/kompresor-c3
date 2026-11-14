@@ -23,12 +23,12 @@ else()
 endif()
 
 juce_add_plugin(KompresorC3
-    PRODUCT_NAME "Kompresor C3"
+    PRODUCT_NAME "Kompressor K3"
     COMPANY_NAME "Kmp"
-    BUNDLE_ID com.kmp.kompresorc3
+    BUNDLE_ID com.kmp.kompressork3
     PLUGIN_MANUFACTURER_CODE Kmps
     PLUGIN_CODE Kmp3
-    FORMATS VST3 Standalone
+    FORMATS VST3
     VST3_CATEGORIES Fx
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
@@ -53,3 +53,17 @@ target_link_libraries(KompresorC3
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
+
+add_executable(HostTest
+    tests/test_host.cpp
+    Source/PluginProcessor.cpp)
+
+target_compile_definitions(HostTest PUBLIC
+    JUCE_WEB_BROWSER=0
+    JUCE_USE_CURL=0
+    JUCE_DISPLAY_SPLASH_SCREEN=0
+    JucePlugin_Name="Kompressor K3")
+
+target_link_libraries(HostTest PRIVATE
+    juce::juce_audio_utils
+    juce::juce_dsp)

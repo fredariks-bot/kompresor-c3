@@ -26,7 +26,7 @@ public:
     int getNumPrograms() override                           { return 1; }
     int getCurrentProgram() override                        { return 0; }
     void setCurrentProgram (int) override                   {}
-    const juce::String getProgramName (int) override        { return "Kompresor C3"; }
+    const juce::String getProgramName (int) override        { return "Kompressor K3"; }
     void changeProgramName (int, const juce::String&) override {}
 
     void getStateInformation (juce::MemoryBlock& destData) override;
@@ -54,7 +54,7 @@ private:
     std::shared_ptr<std::atomic<bool>> stateLoading;
 
     juce::AbstractFifo spectrumFifo { spectrumFifoSize };
-    std::vector<float> spectrumBuffer { (size_t) spectrumFifoSize };
+    std::vector<float> spectrumBuffer = std::vector<float> ((size_t) spectrumFifoSize);
 
     std::atomic<float>* thresholdParam  = nullptr;
     std::atomic<float>* ratioParam      = nullptr;
@@ -70,6 +70,7 @@ private:
     std::atomic<float>* detectorModeParam = nullptr;
     std::atomic<float>* autoRelParam    = nullptr;
     std::atomic<float>* scExtParam      = nullptr;
+    std::atomic<float>* stereoLinkParam = nullptr;
     std::atomic<float>* styleParam      = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (KompresorC3AudioProcessor)
