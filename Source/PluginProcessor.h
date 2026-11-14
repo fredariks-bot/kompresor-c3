@@ -26,7 +26,7 @@ public:
     int getNumPrograms() override                           { return 1; }
     int getCurrentProgram() override                        { return 0; }
     void setCurrentProgram (int) override                   {}
-    const juce::String getProgramName (int) override        { return "Kompresor C3"; }
+    const juce::String getProgramName (int) override        { return "Kompressor K3"; }
     void changeProgramName (int, const juce::String&) override {}
 
     void getStateInformation (juce::MemoryBlock& destData) override;

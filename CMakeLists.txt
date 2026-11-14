@@ -23,9 +23,9 @@ else()
 endif()
 
 juce_add_plugin(KompresorC3
-    PRODUCT_NAME "Kompresor C3"
+    PRODUCT_NAME "Kompressor K3"
     COMPANY_NAME "Kmp"
-    BUNDLE_ID com.kmp.kompresorc3
+    BUNDLE_ID com.kmp.kompressork3
     PLUGIN_MANUFACTURER_CODE Kmps
     PLUGIN_CODE Kmp3
     FORMATS VST3
@@ -62,7 +62,7 @@ target_compile_definitions(HostTest PUBLIC
     JUCE_WEB_BROWSER=0
     JUCE_USE_CURL=0
     JUCE_DISPLAY_SPLASH_SCREEN=0
-    JucePlugin_Name="Kompresor C3")
+    JucePlugin_Name="Kompressor K3")
 
 target_link_libraries(HostTest PRIVATE
     juce::juce_audio_utils

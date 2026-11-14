@@ -36,7 +36,7 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            artifact: Kompresor-C3-windows
+            artifact: Kompressor-K3-windows
     steps:
       - uses: actions/checkout@v4
 
@@ -50,7 +50,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Compress-Archive -Path "build/KompresorC3_artefacts/Release/VST3/Kompresor C3.vst3" -DestinationPath "Kompresor C3.vst3.zip"
+          Compress-Archive -Path "build/KompresorC3_artefacts/Release/VST3/Kompressor K3.vst3" -DestinationPath "Kompressor K3.vst3.zip"
 
       - name: Upload VST3
         uses: actions/upload-artifact@v4
