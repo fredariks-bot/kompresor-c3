@@ -70,6 +70,7 @@ private:
     std::atomic<float>* detectorModeParam = nullptr;
     std::atomic<float>* autoRelParam    = nullptr;
     std::atomic<float>* scExtParam      = nullptr;
+    std::atomic<float>* stereoLinkParam = nullptr;
     std::atomic<float>* styleParam      = nullptr;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (KompresorC3AudioProcessor)

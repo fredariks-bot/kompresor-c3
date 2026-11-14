@@ -80,6 +80,7 @@ public:
         addToggle ("scExternal", "EXT SC");
         addToggle ("hpfOn", "SC HPF");
         addToggle ("autoRelease", "AUTO REL");
+        addToggle ("stereoLink", "ST LINK");
 
         auto addKnob = [this] (const char* paramId, const juce::String& name, const juce::String& suffix)
         {

@@ -168,6 +168,77 @@ int main()
         expectNear ("external SC ducks quiet input", rmsDb, -57.5f, 2.0f);
     }
 
+    // 11) stereo link: loud L, quiet R -> identical GR on both channels, image preserved
+    {
+        kmp::CompressorParams sp;
+        sp.thresholdDb = -30.0f;
+        sp.ratio = 4.0f;
+        sp.attackMs = 1.0f;
+        sp.releaseMs = 50.0f;
+        sp.kneeDb = 0.0f;
+        sp.rangeDb = 60.0f;
+        sp.mix = 1.0f;
+        sp.stereoLink = true;
+
+        kmp::Compressor scomp;
+        scomp.prepare (48000.0, 512);
+        scomp.setParams (sp);
+
+        std::vector<float> inL (96000), inR (96000), outL (96000), outR (96000);
+
+        for (int i = 0; i < 96000; ++i)
+        {
+            inL[(size_t) i] = kmp::dbToGain (-10.0f) * std::sin (2.0 * 3.14159265358979 * 1000.0 * i / 48000.0);
+            inR[(size_t) i] = kmp::dbToGain (-40.0f) * std::sin (2.0 * 3.14159265358979 * 1000.0 * i / 48000.0);
+        }
+
+        const float* inPtrs[2] = { inL.data(), inR.data() };
+        float* outPtrs[2] = { outL.data(), outR.data() };
+        scomp.process (inPtrs, 2, nullptr, 0, outPtrs, 2, 96000);
+
+        double sumSqL = 0.0, sumSqR = 0.0;
+
+        for (int i = 48000; i < 96000; ++i)
+        {
+            sumSqL += outL[(size_t) i] * outL[(size_t) i];
+            sumSqR += outR[(size_t) i] * outR[(size_t) i];
+        }
+
+        const float ratioOut = (float) std::sqrt (sumSqL / sumSqR);
+        const float ratioIn = kmp::dbToGain (30.0f);
+        expectNear ("stereo link preserves panorama", ratioOut, ratioIn, ratioIn * 0.15f);
+    }
+
+    // 12) unlink: quiet channel gets (almost) no reduction
+    {
+        kmp::Compressor scomp;
+        scomp.prepare (48000.0, 512);
+        kmp::CompressorParams sp = p;
+        sp.stereoLink = false;
+        scomp.setParams (sp);
+        scomp.reset();
+
+        std::vector<float> inL (96000), inR (96000), outL (96000), outR (96000);
+
+        for (int i = 0; i < 96000; ++i)
+        {
+            inL[(size_t) i] = kmp::dbToGain (-10.0f) * std::sin (2.0 * 3.14159265358979 * 1000.0 * i / 48000.0);
+            inR[(size_t) i] = kmp::dbToGain (-40.0f) * std::sin (2.0 * 3.14159265358979 * 1000.0 * i / 48000.0);
+        }
+
+        const float* inPtrs[2] = { inL.data(), inR.data() };
+        float* outPtrs[2] = { outL.data(), outR.data() };
+        scomp.process (inPtrs, 2, nullptr, 0, outPtrs, 2, 96000);
+
+        double sumSqR = 0.0;
+
+        for (int i = 48000; i < 96000; ++i)
+            sumSqR += outR[(size_t) i] * outR[(size_t) i];
+
+        const float outRDb = kmp::gainToDb ((float) std::sqrt (sumSqR / 48000.0));
+        expectNear ("unlink leaves quiet channel alone", outRDb, -43.01f, 1.0f);
+    }
+
     std::printf ("\n%s (%d failure%s)\n", failures == 0 ? "ALL TESTS PASSED" : "TESTS FAILED",
                  failures, failures == 1 ? "" : "s");
     return failures == 0 ? 0 : 1;

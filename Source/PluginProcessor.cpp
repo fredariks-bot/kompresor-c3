@@ -46,6 +46,7 @@ juce::AudioProcessorValueTreeState::ParameterLayout KompresorC3AudioProcessor::c
     layout.add (std::make_unique<AudioParameterBool> (pid ("hpfOn"), "SC HPF", false));
     layout.add (std::make_unique<AudioParameterBool> (pid ("autoRelease"), "Auto Release", false));
     layout.add (std::make_unique<AudioParameterBool> (pid ("scExternal"), "External SC", false));
+    layout.add (std::make_unique<AudioParameterBool> (pid ("stereoLink"), "Stereo Link", true));
 
     layout.add (std::make_unique<AudioParameterChoice> (pid ("detectorMode"), "Detector",
         StringArray { "Peak", "RMS" }, 0));
@@ -77,6 +78,7 @@ KompresorC3AudioProcessor::KompresorC3AudioProcessor()
     detectorModeParam = apvts.getRawParameterValue ("detectorMode");
     autoRelParam   = apvts.getRawParameterValue ("autoRelease");
     scExtParam     = apvts.getRawParameterValue ("scExternal");
+    stereoLinkParam = apvts.getRawParameterValue ("stereoLink");
     styleParam     = apvts.getRawParameterValue ("style");
 
     apvts.addParameterListener ("style", this);
@@ -212,6 +214,7 @@ void KompresorC3AudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, 
     p.hpfOn         = hpfOnParam->load() > 0.5f;
     p.rmsMode       = detectorModeParam->load() > 0.5f;
     p.autoRelease   = autoRelParam->load() > 0.5f;
+    p.stereoLink    = stereoLinkParam->load() > 0.5f;
 
     compressor.setParams (p);
 
