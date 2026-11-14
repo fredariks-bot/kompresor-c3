@@ -35,51 +35,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            artifact: Kompresor-C3-linux
-          - os: macos-latest
-            artifact: Kompresor-C3-macos
           - os: windows-latest
             artifact: Kompresor-C3-windows
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y pkg-config libx11-dev libxext-dev libxinerama-dev \
-            libxrandr-dev libxcursor-dev libfreetype-dev libfontconfig-dev libasound2-dev
-
       - name: Configure
         run: cmake -B build -DCMAKE_BUILD_TYPE=Release
 
-      - name: Configure (macOS universal binary)
-        if: runner.os == 'macOS'
-        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_ARCHITECTURES="arm64;x86_64"
-
       - name: Build
         run: cmake --build build --config Release --parallel
-
-      - name: Package (macOS)
-        if: runner.os == 'macOS'
-        run: |
-          cd build/KompresorC3_artefacts/Release
-          codesign --force --deep -s - "VST3/Kompresor C3.vst3" || true
-          ditto -c -k --keepParent "VST3/Kompresor C3.vst3" "$GITHUB_WORKSPACE/Kompresor C3.vst3.zip"
 
       - name: Package (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
           Compress-Archive -Path "build/KompresorC3_artefacts/Release/VST3/Kompresor C3.vst3" -DestinationPath "Kompresor C3.vst3.zip"
-
-      - name: Package (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          cd build/KompresorC3_artefacts/Release
-          chmod +x "VST3/Kompresor C3.vst3/Contents/x86_64-linux/Kompresor C3.so"
-          zip -r "$GITHUB_WORKSPACE/Kompresor C3.vst3.zip" "VST3/Kompresor C3.vst3"
 
       - name: Upload VST3
         uses: actions/upload-artifact@v4
